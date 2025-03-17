@@ -1,4 +1,5 @@
 const express = require("express");
+const session = require("express-session");
 const app = express();
 const port = 3000;
 
@@ -6,7 +7,21 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded());
 
+const sessionConfiguration = {
+  secret: "tryfgvfyuygd",
+};
+
+app.use(session(sessionConfiguration));
+
 const USERS = [];
+
+app.get("/dashboard", (req, res) => {
+  if (req.session.isAuthenticated) {
+    res.sendFile(__dirname + "/views/Dashboard.html");
+  } else {
+    res.send("you are unauthenticaed");
+  }
+});
 
 app.post("/signup", (req, res) => {
   const username = req.body.username;
@@ -28,7 +43,8 @@ app.post("/login", (req, res) => {
     return;
   }
   if (filteredUsers[0].password === password) {
-    res.redirect("/Dashboard.html");
+    req.session.isAuthenticated = true;
+    res.redirect("/dashboard");
   } else {
     res.send("Invalid password");
   }
