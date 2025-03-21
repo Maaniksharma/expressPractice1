@@ -15,9 +15,9 @@ app.use(session(sessionConfiguration));
 
 const USERS = [];
 
-app.get("/dashboard", (req, res) => {
+app.get("/addtask", (req, res) => {
   if (req.session.isAuthenticated) {
-    res.sendFile(__dirname + "/views/Dashboard.html");
+    res.sendFile(__dirname + "/views/addTask.html");
   } else {
     res.send("you are unauthenticaed");
   }
@@ -44,9 +44,25 @@ app.post("/login", (req, res) => {
   }
   if (filteredUsers[0].password === password) {
     req.session.isAuthenticated = true;
-    res.redirect("/dashboard");
+    res.redirect("/addtask");
   } else {
     res.send("Invalid password");
   }
 });
+app.post("/addtask", (req, res) => {
+  const task = req.body;
+  if (req.session.tasks) {
+    req.session.tasks.push(task);
+  } else {
+    req.session.tasks = [task];
+  }
+  res.json({
+    message: "task inserted successfully",
+  });
+});
+
+app.get("/showtasks", (req, res) => {
+  res.json({ tasks: req.session.tasks });
+});
+
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
