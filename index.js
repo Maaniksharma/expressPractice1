@@ -1,3 +1,4 @@
+//custom middlewares in express.js
 const express = require("express");
 const session = require("express-session");
 const app = express();
@@ -7,6 +8,8 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded());
 
+app.set("view engine", "ejs");
+
 const sessionConfiguration = {
   secret: "tryfgvfyuygd",
 };
@@ -15,12 +18,21 @@ app.use(session(sessionConfiguration));
 
 const USERS = [];
 
-app.get("/addtask", (req, res) => {
+function checkAuth(req, res, next) {
   if (req.session.isAuthenticated) {
-    res.sendFile(__dirname + "/views/addTask.html");
+    next();
   } else {
     res.send("you are unauthenticaed");
   }
+}
+
+app.get("/dashboard", checkAuth, (req, res) => {
+  res.render("Dashboard", { username: req.session.user.username });
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.send({ message: "session destroyed successfully" });
 });
 
 app.post("/signup", (req, res) => {
@@ -44,25 +56,10 @@ app.post("/login", (req, res) => {
   }
   if (filteredUsers[0].password === password) {
     req.session.isAuthenticated = true;
-    res.redirect("/addtask");
+    req.session.user = filteredUsers[0];
+    res.redirect("/dashboard");
   } else {
     res.send("Invalid password");
   }
 });
-app.post("/addtask", (req, res) => {
-  const task = req.body;
-  if (req.session.tasks) {
-    req.session.tasks.push(task);
-  } else {
-    req.session.tasks = [task];
-  }
-  res.json({
-    message: "task inserted successfully",
-  });
-});
-
-app.get("/showtasks", (req, res) => {
-  res.json({ tasks: req.session.tasks });
-});
-
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
